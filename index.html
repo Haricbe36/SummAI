@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SummAI — AI Video Summariser by GMW Labs</title>
+<meta name="description" content="SummAI automatically transcribes and summarises any video — lectures, meetings, YouTube videos, interviews, documentaries and more. Supports 90+ languages including English, German, French, Spanish and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #080C14;
+    --bg2:     #0E1420;
+    --bg3:     #162030;
+    --bg4:     #1C2840;
+    --mint:    #00C896;
+    --violet:  #6C63FF;
+    --sky:     #00A8FF;
+    --text:    #E8EDF5;
+    --muted:   #7A8499;
+    --border:  #1E2D42;
+    --danger:  #FF5E5E;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5%;
+    height: 64px;
+    background: rgba(8,12,20,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .nav-brand span:first-child { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+  .nav-brand span.ai { color: var(--mint); }
+  .nav-brand .by { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--mint); color: #000; font-weight: 700;
+    padding: 8px 20px; border-radius: 6px; text-decoration: none;
+    font-size: 0.85rem; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: #00E5AB; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 60px 5% 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(108,99,255,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0,200,150,0.08) 0%, transparent 60%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 860px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,200,150,0.1); border: 1px solid rgba(0,200,150,0.3);
+    color: var(--mint); font-size: 0.8rem; font-weight: 600;
+    padding: 6px 16px; border-radius: 100px; margin-bottom: 28px;
+  }
+  .hero-badge::before { content: "●"; font-size: 0.6rem; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    font-weight: 800; line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+  }
+  h1 .mint { color: var(--mint); }
+  h1 .violet { color: var(--violet); }
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--muted); max-width: 580px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--mint); color: #000;
+    font-weight: 700; font-size: 1rem;
+    padding: 14px 32px; border-radius: 8px;
+    text-decoration: none; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { background: #00E5AB; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,200,150,0.3); }
+  .btn-secondary {
+    background: transparent; color: var(--text);
+    font-weight: 600; font-size: 1rem;
+    padding: 14px 32px; border-radius: 8px;
+    text-decoration: none; border: 1px solid var(--border);
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--violet); color: var(--violet); }
+
+  /* ── GRADIENT LINE ── */
+  .gradient-line {
+    height: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--mint), var(--sky));
+    margin: 0;
+  }
+
+  /* ── DEMO TERMINAL ── */
+  .demo-section {
+    padding: 80px 5%;
+    background: var(--bg2);
+  }
+  .demo-label {
+    text-align: center; font-size: 0.75rem; font-weight: 600;
+    color: var(--mint); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .demo-title {
+    text-align: center; font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700; margin-bottom: 48px;
+  }
+  .terminal {
+    max-width: 820px; margin: 0 auto;
+    background: #0A0F1A; border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .terminal-bar {
+    background: var(--bg3); padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.r { background: #FF5F57; }
+  .dot.y { background: #FFBD2E; }
+  .dot.g { background: #28C840; }
+  .terminal-title { color: var(--muted); font-size: 0.8rem; margin-left: auto; margin-right: auto; }
+  .terminal-body { padding: 24px; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.8; min-height: 280px; }
+  .t-line { margin-bottom: 4px; }
+  .t-label { color: var(--mint); font-weight: 700; }
+  .t-muted { color: var(--muted); }
+  .t-output { color: var(--text); }
+  .t-bold { color: var(--violet); font-weight: 700; }
+  .t-success { color: var(--mint); }
+  #typed-summary { color: var(--text); }
+  .cursor { display: inline-block; width: 8px; height: 14px; background: var(--mint); animation: blink 1s infinite; vertical-align: middle; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── STATS ── */
+  .stats {
+    padding: 60px 5%;
+    display: flex; justify-content: center; gap: 0;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat {
+    text-align: center; padding: 24px 48px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num { font-size: 2.4rem; font-weight: 800; color: var(--mint); line-height: 1; }
+  .stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+  /* ── FEATURES ── */
+  .features { padding: 100px 5%; }
+  .section-eyebrow {
+    text-align: center; font-size: 0.75rem; font-weight: 600;
+    color: var(--violet); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    text-align: center; font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 700; margin-bottom: 16px;
+  }
+  .section-sub {
+    text-align: center; color: var(--muted);
+    max-width: 500px; margin: 0 auto 64px;
+    font-size: 1rem; line-height: 1.7;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px; max-width: 1100px; margin: 0 auto;
+  }
+  .feature-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .feature-card:hover { border-color: var(--violet); transform: translateY(-2px); }
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+  .feature-card p { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── HOW IT WORKS ── */
+  .how { padding: 100px 5%; background: var(--bg2); }
+  .steps { display: flex; gap: 0; max-width: 900px; margin: 0 auto; position: relative; flex-wrap: wrap; }
+  .steps::before {
+    content: "";
+    position: absolute; top: 28px; left: 10%; right: 10%; height: 2px;
+    background: linear-gradient(90deg, var(--violet), var(--mint));
+    z-index: 0;
+  }
+  .step { flex: 1; min-width: 160px; text-align: center; padding: 0 16px; position: relative; z-index: 1; }
+  .step-num {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--violet);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 800; color: var(--violet);
+    margin: 0 auto 16px;
+  }
+  .step h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
+  .step p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── LANGUAGES ── */
+  .languages { padding: 80px 5%; text-align: center; }
+  .lang-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+  .lang-badge {
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 10px 20px; border-radius: 100px;
+    font-size: 0.9rem; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lang-badge .dot2 { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); }
+
+  /* ── PRICING ── */
+  .pricing { padding: 100px 5%; background: var(--bg2); }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px; max-width: 900px; margin: 0 auto;
+  }
+  .price-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 16px; padding: 36px 28px;
+    text-align: center; position: relative;
+  }
+  .price-card.featured {
+    border-color: var(--mint);
+    background: linear-gradient(160deg, rgba(0,200,150,0.06), var(--bg3));
+  }
+  .popular-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--mint); color: #000; font-size: 0.75rem; font-weight: 700;
+    padding: 4px 16px; border-radius: 100px;
+  }
+  .price-plan { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .price-amount { font-size: 2.8rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .price-amount span { font-size: 1.2rem; color: var(--muted); font-weight: 400; }
+  .price-period { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
+  .price-features { list-style: none; text-align: left; margin-bottom: 32px; }
+  .price-features li {
+    font-size: 0.875rem; padding: 6px 0;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .price-features li:last-child { border-bottom: none; }
+  .price-features li::before { content: "✓"; color: var(--mint); font-weight: 700; flex-shrink: 0; }
+  .btn-plan {
+    display: block; width: 100%; padding: 12px;
+    border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+    text-decoration: none; transition: all 0.2s; border: none; cursor: pointer;
+  }
+  .btn-plan.primary { background: var(--mint); color: #000; }
+  .btn-plan.primary:hover { background: #00E5AB; }
+  .btn-plan.outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-plan.outline:hover { border-color: var(--violet); color: var(--violet); }
+
+  /* ── CONTACT / CTA ── */
+  .cta-section {
+    padding: 100px 5%; text-align: center;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(108,99,255,0.1) 0%, transparent 70%);
+  }
+  .cta-section h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; margin-bottom: 16px; }
+  .cta-section p { color: var(--muted); max-width: 480px; margin: 0 auto 40px; font-size: 1rem; }
+  .contact-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+  .contact-item {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 0.9rem;
+  }
+  .contact-item a { color: var(--mint); text-decoration: none; }
+  .contact-item a:hover { text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg2); border-top: 1px solid var(--border);
+    padding: 40px 5%;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .footer-brand { font-size: 1.1rem; font-weight: 800; }
+  .footer-brand span { color: var(--mint); }
+  footer p { color: var(--muted); font-size: 0.8rem; }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { color: var(--muted); font-size: 0.8rem; text-decoration: none; }
+  .footer-links a:hover { color: var(--mint); }
+
+  /* ── RESPONSIVE ── */
+  /* ── LANG SWITCHER ── */
+  .lang-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-size: 0.75rem; font-weight: 500;
+    padding: 4px 12px; border-radius: 100px; cursor: pointer;
+    transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .lang-btn:hover { border-color: var(--violet); color: var(--violet); }
+  .lang-btn.active { background: var(--violet); border-color: var(--violet); color: white; }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .stats { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); padding: 20px; }
+    .stat:last-child { border-bottom: none; }
+    .steps::before { display: none; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="nav-brand" href="#">
+    <span>Summ<span class="ai">AI</span></span>
+    <span class="by">by GMW Labs</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <a class="nav-cta" href="#pricing">Get SummAI →</a>
+</nav>
+
+<!-- LANGUAGE SWITCHER BANNER -->
+<div id="lang-banner" style="background:var(--bg3);border-bottom:1px solid var(--border);padding:6px 5%;display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:64px;">
+  <span style="font-size:0.75rem;color:var(--muted);margin-right:8px;">🌐 Language:</span>
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">English</button>
+  <button class="lang-btn" onclick="setLang('de')" id="btn-de">Deutsch</button>
+  <button class="lang-btn" onclick="setLang('fr')" id="btn-fr">Français</button>
+  <button class="lang-btn" onclick="setLang('es')" id="btn-es">Español</button>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">AI-Powered · Any Video · 90+ Languages</div>
+    <h1>Any video.<br>
+    <span class="mint">Summarised</span> in minutes.<br>
+    <span class="violet">Automatically.</span></h1>
+    <p class="hero-sub">
+      SummAI transcribes every spoken word and reads every slide from
+      any video — lectures, meetings, YouTube, interviews, documentaries —
+      and delivers a structured, intelligent summary in your language.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#pricing">⬇ Download SummAI</a>
+      <a class="btn-secondary" href="#demo">▶ See it in action</a>
+    </div>
+  </div>
+</section>
+
+<div class="gradient-line"></div>
+
+<!-- DEMO TERMINAL -->
+<section class="demo-section" id="demo">
+  <div class="demo-label">Live Demo</div>
+  <h2 class="demo-title">Watch SummAI think</h2>
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <span class="terminal-title">SummAI — Processing video.mp4</span>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="t-label">[10:22:01]</span> <span class="t-muted">File detected: Engineering_Masterclass_Day2.mp4</span></div>
+      <div class="t-line"><span class="t-label">[10:22:03]</span> <span class="t-muted">Transcribing audio with Whisper... 67%</span></div>
+      <div class="t-line"><span class="t-label">[10:29:14]</span> <span class="t-success">✓ Transcription complete (7,602 words)</span></div>
+      <div class="t-line"><span class="t-label">[10:29:15]</span> <span class="t-muted">Extracting key slides from video...</span></div>
+      <div class="t-line"><span class="t-label">[10:29:22]</span> <span class="t-success">✓ 28 unique slides captured</span></div>
+      <div class="t-line"><span class="t-label">[10:29:22]</span> <span class="t-muted">Sending transcript + slides to Gemini Vision...</span></div>
+      <br>
+      <div class="t-line"><span class="t-bold">SUMMARY</span></div>
+      <div class="t-line" style="color:#4A5568">──────────────────────────────────────</div>
+      <div id="typed-summary"></div><span class="cursor"></span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stat">
+    <div class="stat-num">15×</div>
+    <div class="stat-label">Faster than manual notes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">30+</div>
+    <div class="stat-label">Slide formats supported</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Private — runs locally</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">2</div>
+    <div class="stat-label">Languages — Tamil &amp; English</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-eyebrow">Capabilities</div>
+  <h2 class="section-title">Works with any video, anywhere</h2>
+  <p class="section-sub">Lectures, meetings, YouTube videos, documentaries — SummAI handles them all.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,200,150,0.1)">🎙</div>
+      <h3>Audio Transcription</h3>
+      <p>Powered by OpenAI Whisper running locally on your machine. Works on any video or audio file — no cloud upload needed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(108,99,255,0.1)">🖼</div>
+      <h3>Visual Slide Reading</h3>
+      <p>Gemini Vision reads every slide, chart, and diagram. Captures timestamps, statistics, and key text invisible to audio-only tools.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,168,255,0.1)">📋</div>
+      <h3>Structured Summaries</h3>
+      <p>Every summary includes Overview, Key Topics, Insights, Action Items, and Notable Quotes — ready to share instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,200,150,0.1)">🔗</div>
+      <h3>YouTube &amp; URL Support</h3>
+      <p>Paste any YouTube, Vimeo, Facebook, or online video link. SummAI downloads, transcribes, and summarises it automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(108,99,255,0.1)">💾</div>
+      <h3>PDF &amp; TXT Export</h3>
+      <p>Save your summary as a branded PDF or plain text file. Share with your team in seconds.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(255,94,94,0.1)">🔒</div>
+      <h3>100% Private</h3>
+      <p>Transcription runs offline on your laptop. Your video content never leaves your machine. Your data is yours.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-eyebrow">Process</div>
+  <h2 class="section-title">Three steps. That's all.</h2>
+  <p class="section-sub" style="margin-bottom:64px">No technical knowledge needed. Works on any video — just drop a file or paste a link.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Drop your file</h4>
+      <p>Drop any video or audio file. Or paste a YouTube, Vimeo, or any online video link.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>AI processes it</h4>
+      <p>Whisper transcribes audio. Gemini Vision reads slides. Combined in seconds.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Save &amp; share</h4>
+      <p>Export your structured summary as PDF or TXT. Done.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LANGUAGES -->
+<section class="languages">
+  <div class="section-eyebrow">Language Support</div>
+  <h2 class="section-title">Speak any language. SummAI understands.</h2>
+  <p class="section-sub">Powered by OpenAI Whisper — the world's most accurate multilingual transcription engine. Summarise videos in any language, get your output in English.</p>
+  <div class="lang-badges">
+    <div class="lang-badge"><div class="dot2"></div> English</div>
+    <div class="lang-badge"><div class="dot2"></div> German</div>
+    <div class="lang-badge"><div class="dot2"></div> French</div>
+    <div class="lang-badge"><div class="dot2"></div> Spanish</div>
+    <div class="lang-badge"><div class="dot2"></div> Hindi</div>
+    <div class="lang-badge"><div class="dot2"></div> Arabic</div>
+    <div class="lang-badge"><div class="dot2"></div> Chinese</div>
+    <div class="lang-badge"><div class="dot2"></div> Japanese</div>
+    <div class="lang-badge"><div class="dot2"></div> Portuguese</div>
+    <div class="lang-badge"><div class="dot2"></div> Italian</div>
+    <div class="lang-badge" style="border-color:var(--violet);color:var(--violet);font-weight:600">+ 80 more languages</div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section class="features" style="background:var(--bg2)" id="usecases">
+  <div class="section-eyebrow">Who Uses SummAI</div>
+  <h2 class="section-title">Built for everyone who watches videos</h2>
+  <p class="section-sub">Any video. Any purpose. Any language.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,200,150,0.1)">🎓</div>
+      <h3>Students & Researchers</h3>
+      <p>Summarise lecture recordings, online courses, and research talks. Get structured notes from any educational video instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(108,99,255,0.1)">💼</div>
+      <h3>Business Teams</h3>
+      <p>Summarise meeting recordings, training sessions, product demos, and client calls. Share action items with your team in minutes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,168,255,0.1)">📰</div>
+      <h3>Journalists & Researchers</h3>
+      <p>Transcribe interviews, press conferences, and documentary footage. Extract quotes and key points automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,200,150,0.1)">🏫</div>
+      <h3>Training Institutes</h3>
+      <p>Convert every training session into structured notes. Give students instant access to session summaries and key takeaways.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(108,99,255,0.1)">📺</div>
+      <h3>Content Creators</h3>
+      <p>Summarise YouTube videos, podcasts, and online interviews. Research faster and create better content with less effort.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(255,94,94,0.1)">🏥</div>
+      <h3>Healthcare & Legal</h3>
+      <p>Transcribe and summarise medical lectures, legal proceedings, and professional development videos with full privacy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-eyebrow">Pricing</div>
+  <h2 class="section-title">Simple, honest pricing</h2>
+  <p class="section-sub">No subscriptions. No hidden fees. Pay once, use forever.</p>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-plan">Trial</div>
+      <div class="price-amount">Free <span></span></div>
+      <div class="price-period">30 days · no credit card</div>
+      <ul class="price-features">
+        <li>Full feature access</li>
+        <li>File + URL summarisation</li>
+        <li>Visual slide reading</li>
+        <li>PDF &amp; TXT export</li>
+        <li>Tamil &amp; English support</li>
+      </ul>
+      <a href="mailto:GMWcbe3@gmail.com?subject=SummAI Trial Request" class="btn-plan outline">Request Trial →</a>
+    </div>
+    <div class="price-card featured">
+      <div class="popular-badge">Most Popular</div>
+      <div class="price-plan">Personal</div>
+      <div class="price-amount">$29 <span></span></div>
+      <div class="price-period">One-time · lifetime license</div>
+      <ul class="price-features">
+        <li>Everything in Trial</li>
+        <li>Lifetime license — 1 machine</li>
+        <li>Free updates for 1 year</li>
+        <li>Email support</li>
+        <li>Setup guide included</li>
+      </ul>
+      <a href="mailto:GMWcbe3@gmail.com?subject=SummAI Personal License" class="btn-plan primary">Buy Now →</a>
+    </div>
+    <div class="price-card">
+      <div class="price-plan">Business</div>
+      <div class="price-amount">$99 <span></span></div>
+      <div class="price-period">One-time · up to 5 machines</div>
+      <ul class="price-features">
+        <li>Everything in Personal</li>
+        <li>5 machine licenses</li>
+        <li>Priority email support</li>
+        <li>Team onboarding call</li>
+        <li>Custom branding option</li>
+      </ul>
+      <a href="mailto:GMWcbe3@gmail.com?subject=SummAI Business License" class="btn-plan outline">Contact Us →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <h2>Ready to summarise any video instantly?</h2>
+  <p>Join students, educators, researchers, journalists, and business teams worldwide who save hours every week with SummAI.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="mailto:GMWcbe3@gmail.com?subject=SummAI Enquiry">Get Started Today →</a>
+  </div>
+  <div class="contact-row">
+    <div class="contact-item">📧 <a href="mailto:GMWcbe3@gmail.com">GMWcbe3@gmail.com</a></div>
+    <div class="contact-item">📞 <a href="tel:+917904326509">+91 79043 26509</a></div>
+    <div class="contact-item">📍 Coimbatore, Tamil Nadu, India</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">Summ<span>AI</span> · GMW Labs</div>
+  <p>© 2026 General Machine Works · Hariharan · Coimbatore</p>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="mailto:GMWcbe3@gmail.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+// ── TYPING ANIMATION ──
+const summaryText = `**Overview**
+This masterclass covers Enhanced Agentic RAG — how Uber built 
+an AI assistant with 27% better accuracy and 60% fewer errors.
+
+**Key Topics**
+• Limitations of traditional RAG systems
+• Uber's 4-component EAg-RAG architecture  
+• Hybrid retrieval: Vector Search + BM25
+• LLM-as-Judge evaluation framework
+
+**Action Items**
+→ Explore aistudio.google.com for RAG notebooks
+→ Review Uber Engineering blog on Agentic RAG`;
+
+let i = 0;
+const el = document.getElementById('typed-summary');
+
+function type() {
+  if (i < summaryText.length) {
+    const ch = summaryText[i];
+    if (ch === '*' && summaryText[i+1] === '*') {
+      // Bold
+      const end = summaryText.indexOf('**', i+2);
+      const word = summaryText.slice(i+2, end);
+      el.innerHTML += `<span style="color:#00C896;font-weight:700">${word}</span>`;
+      i = end + 2;
+    } else if (ch === '→') {
+      el.innerHTML += `<span style="color:#6C63FF">→</span>`;
+      i++;
+    } else if (ch === '•') {
+      el.innerHTML += `<span style="color:#6C63FF">•</span>`;
+      i++;
+    } else if (ch === '\n') {
+      el.innerHTML += '<br>';
+      i++;
+    } else {
+      el.innerHTML += ch;
+      i++;
+    }
+    setTimeout(type, ch === '\n' ? 60 : 18);
+  }
+}
+
+// Start typing when terminal is in view
+const observer = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting && i === 0) {
+    setTimeout(type, 800);
+  }
+}, { threshold: 0.3 });
+observer.observe(document.querySelector('.terminal'));
+
+// ── SCROLL REVEAL ──
+const revealEls = document.querySelectorAll('.feature-card, .price-card, .step');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+revealEls.forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  revealObserver.observe(el);
+});
+</script>
+<script>
+// ── TRANSLATIONS ──
+const translations = {
+  en: {
+    heroTitle: "Any video.<br><span class='mint'>Summarised</span> in minutes.<br><span class='violet'>Automatically.</span>",
+    heroSub: "SummAI transcribes every spoken word and reads every slide from any video — lectures, meetings, YouTube, interviews, documentaries — and delivers a structured, intelligent summary in your language.",
+    heroCta1: "⬇ Download SummAI",
+    heroCta2: "▶ See it in action",
+    featTitle: "Works with any video, anywhere",
+    featSub: "Lectures, meetings, YouTube videos, documentaries — SummAI handles them all.",
+    pricingTitle: "Simple, honest pricing",
+    pricingSub: "No subscriptions. No hidden fees. Pay once, use forever.",
+    ctaTitle: "Ready to summarise any video instantly?",
+    ctaSub: "Join students, educators, researchers, journalists, and business teams worldwide who save hours every week with SummAI.",
+    ctaBtn: "Get Started Today →",
+    navFeatures: "Features",
+    navHow: "How it works",
+    navPricing: "Pricing",
+    navContact: "Contact",
+    badge: "AI-Powered · Any Video · 90+ Languages",
+    trialBtn: "Request Trial →",
+    buyBtn: "Buy Now →",
+    contactBtn: "Contact Us →",
+  },
+  de: {
+    heroTitle: "Jedes Video.<br><span class='mint'>Zusammengefasst</span> in Minuten.<br><span class='violet'>Automatisch.</span>",
+    heroSub: "SummAI transkribiert jedes gesprochene Wort und liest jede Folie aus jedem Video — Vorlesungen, Meetings, YouTube, Interviews, Dokumentationen — und liefert eine strukturierte, intelligente Zusammenfassung.",
+    heroCta1: "⬇ SummAI herunterladen",
+    heroCta2: "▶ Demo ansehen",
+    featTitle: "Funktioniert mit jedem Video",
+    featSub: "Vorlesungen, Meetings, YouTube-Videos, Dokumentationen — SummAI verarbeitet alles.",
+    pricingTitle: "Einfache, ehrliche Preise",
+    pricingSub: "Keine Abonnements. Keine versteckten Kosten. Einmal zahlen, für immer nutzen.",
+    ctaTitle: "Bereit, jedes Video sofort zusammenzufassen?",
+    ctaSub: "Schließen Sie sich Studenten, Pädagogen, Forschern und Geschäftsteams weltweit an, die wöchentlich Stunden sparen.",
+    ctaBtn: "Jetzt starten →",
+    navFeatures: "Funktionen",
+    navHow: "So funktioniert es",
+    navPricing: "Preise",
+    navContact: "Kontakt",
+    badge: "KI-gestützt · Jedes Video · 90+ Sprachen",
+    trialBtn: "Testversion anfragen →",
+    buyBtn: "Jetzt kaufen →",
+    contactBtn: "Kontakt →",
+  },
+  fr: {
+    heroTitle: "N'importe quelle vidéo.<br><span class='mint'>Résumée</span> en minutes.<br><span class='violet'>Automatiquement.</span>",
+    heroSub: "SummAI transcrit chaque mot parlé et lit chaque diapositive de n'importe quelle vidéo — cours, réunions, YouTube, interviews, documentaires — et produit un résumé intelligent et structuré.",
+    heroCta1: "⬇ Télécharger SummAI",
+    heroCta2: "▶ Voir la démo",
+    featTitle: "Fonctionne avec n'importe quelle vidéo",
+    featSub: "Cours, réunions, vidéos YouTube, documentaires — SummAI gère tout.",
+    pricingTitle: "Tarification simple et honnête",
+    pricingSub: "Pas d'abonnements. Pas de frais cachés. Payez une fois, utilisez pour toujours.",
+    ctaTitle: "Prêt à résumer n'importe quelle vidéo instantanément ?",
+    ctaSub: "Rejoignez des étudiants, enseignants, chercheurs et équipes professionnelles dans le monde entier.",
+    ctaBtn: "Commencer maintenant →",
+    navFeatures: "Fonctionnalités",
+    navHow: "Comment ça marche",
+    navPricing: "Tarifs",
+    navContact: "Contact",
+    badge: "IA · N'importe quelle vidéo · 90+ langues",
+    trialBtn: "Demander un essai →",
+    buyBtn: "Acheter maintenant →",
+    contactBtn: "Nous contacter →",
+  },
+  es: {
+    heroTitle: "Cualquier vídeo.<br><span class='mint'>Resumido</span> en minutos.<br><span class='violet'>Automáticamente.</span>",
+    heroSub: "SummAI transcribe cada palabra hablada y lee cada diapositiva de cualquier vídeo — clases, reuniones, YouTube, entrevistas, documentales — y entrega un resumen inteligente y estructurado.",
+    heroCta1: "⬇ Descargar SummAI",
+    heroCta2: "▶ Ver demostración",
+    featTitle: "Funciona con cualquier vídeo",
+    featSub: "Clases, reuniones, vídeos de YouTube, documentales — SummAI lo maneja todo.",
+    pricingTitle: "Precios simples y honestos",
+    pricingSub: "Sin suscripciones. Sin tarifas ocultas. Paga una vez, úsalo para siempre.",
+    ctaTitle: "¿Listo para resumir cualquier vídeo al instante?",
+    ctaSub: "Únase a estudiantes, educadores, investigadores y equipos de negocios en todo el mundo.",
+    ctaBtn: "Empezar hoy →",
+    navFeatures: "Características",
+    navHow: "Cómo funciona",
+    navPricing: "Precios",
+    navContact: "Contacto",
+    badge: "IA · Cualquier vídeo · 90+ idiomas",
+    trialBtn: "Solicitar prueba →",
+    buyBtn: "Comprar ahora →",
+    contactBtn: "Contáctenos →",
+  }
+};
+
+function setLang(lang) {
+  const t = translations[lang];
+  if (!t) return;
+
+  // Update active button
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + lang).classList.add('active');
+
+  // Update content
+  document.querySelector('h1').innerHTML = t.heroTitle;
+  document.querySelector('.hero-sub').textContent = t.heroSub;
+  document.querySelector('.hero-badge').innerHTML = '&#9679; ' + t.badge;
+
+  const heroBtns = document.querySelectorAll('.hero-actions .btn-primary, .hero-actions .btn-secondary');
+  if (heroBtns[0]) heroBtns[0].textContent = t.heroCta1;
+  if (heroBtns[1]) heroBtns[1].textContent = t.heroCta2;
+
+  // Nav links
+  const navLinks = document.querySelectorAll('.nav-links a');
+  if (navLinks[0]) navLinks[0].textContent = t.navFeatures;
+  if (navLinks[1]) navLinks[1].textContent = t.navHow;
+  if (navLinks[2]) navLinks[2].textContent = t.navPricing;
+  if (navLinks[3]) navLinks[3].textContent = t.navContact;
+
+  // Features section
+  const featTitleEl = document.querySelector('#features .section-title');
+  const featSubEl = document.querySelector('#features .section-sub');
+  if (featTitleEl) featTitleEl.textContent = t.featTitle;
+  if (featSubEl) featSubEl.textContent = t.featSub;
+
+  // Pricing section
+  const priceTitleEl = document.querySelector('.pricing .section-title');
+  const priceSubEl = document.querySelector('.pricing .section-sub');
+  if (priceTitleEl) priceTitleEl.textContent = t.pricingTitle;
+  if (priceSubEl) priceSubEl.textContent = t.pricingSub;
+
+  // CTA section
+  const ctaTitleEl = document.querySelector('.cta-section h2');
+  const ctaSubEl = document.querySelector('.cta-section p');
+  const ctaBtnEl = document.querySelector('.cta-section .btn-primary');
+  if (ctaTitleEl) ctaTitleEl.textContent = t.ctaTitle;
+  if (ctaSubEl) ctaSubEl.textContent = t.ctaSub;
+  if (ctaBtnEl) ctaBtnEl.textContent = t.ctaBtn;
+
+  // Pricing buttons
+  const planBtns = document.querySelectorAll('.btn-plan');
+  if (planBtns[0]) planBtns[0].textContent = t.trialBtn;
+  if (planBtns[1]) planBtns[1].textContent = t.buyBtn;
+  if (planBtns[2]) planBtns[2].textContent = t.contactBtn;
+}
+</script>
+</body>
+</html>
